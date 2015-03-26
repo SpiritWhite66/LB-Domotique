@@ -1,2 +1,2 @@
 # LB-Domotique
-Domotic project with raspberry pi or banana pi and arduino
+home automation project with raspberry pi or banana pi and arduino
