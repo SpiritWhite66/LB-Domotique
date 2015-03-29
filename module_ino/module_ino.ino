@@ -5,8 +5,9 @@
  
  
 
-const int bouton = 3;
-const int relay = 2;
+const int bouton = 2;
+const int led = 3;
+const int relay = 4;
  
 int etatBouton;
 boolean etat, statu;
@@ -34,6 +35,7 @@ void setup(){
   
   /*** Initialisation des sorties pour le relai et le bouton ***/
   pinMode(relay, OUTPUT); 
+  pinMode(led, OUTPUT);
   pinMode(bouton, INPUT); 
   etatBouton = HIGH; 
   etat = false; 
@@ -71,13 +73,15 @@ void loop(){
     {
       etat = false;
       statu = true; 
-      digitalWrite(relay, LOW); 
+      digitalWrite(relay, LOW);
+      digitalWrite(led, LOW);  
     }
     if(etat == false)
     {
       etat = true; 
       statu = true; 
       digitalWrite(relay, HIGH);
+      digitalWrite(led, HIGH); 
     }
   }
   else if(digitalRead(bouton)==LOW and statu == true) // cette ligne permet de bloqué le changement d'état du relay x fois quand on appui sur le bouton 
