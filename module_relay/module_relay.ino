@@ -94,7 +94,7 @@ void loop(){
             digitalWrite(led, HIGH);
             etat=true;
           }
-                      
+          presse = true;            
         }
         statu=false;   //je bloque les actions tant que le bouton n'a pas était relaché
         access=false; //on rebloque l'accès par la connexion sans fils
