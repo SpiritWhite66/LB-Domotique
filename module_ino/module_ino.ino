@@ -1,17 +1,19 @@
-#include <SPI.h>
-#include <Mirf.h>
-#include <nRF24L01.h>
-#include <MirfHardwareSpiDriver.h>
+//#include <SPI.h>
+//#include <Mirf.h>
+//#include <nRF24L01.h>
+//#include <MirfHardwareSpiDriver.h>
  
  
 
 const int bouton = 2;
 const int led = 3;
 const int relay = 4;
+const char identifiant = 'R'; //identifiant du module
  
 int etatBouton;
 boolean etat, statu,access;
-
+char * commande;
+boolean presse;
 void setup(){
   Serial.begin(115200);
   /*** Initialisation de la connexion sans-fil à base de NRF24L01 ***/
@@ -38,7 +40,7 @@ void setup(){
   etat=true;
   statu=true;
   access=false; //jeton d'accès de la connexion sans fils
-  
+  presse = false;
 }
  
 void loop(){
@@ -69,31 +71,23 @@ void loop(){
    access=true; //j'active le jeton
    statu = true
  }*/
-      char data = 0; //variable contenant le caractère à lire
-      int reception = 0; //variable contenant le nombre de caractère disponibles dans le buffer
-    
-      reception = Serial.available();
-    
-      while(reception > 0) //tant qu'il y a des caractères à lire
-      {
-          access = true;
-          data = Serial.read(); //on lit le caractère
-          reception = Serial.available(); //on relit le nombre de caractères dispo
-      }
-      Serial.println(statu); 
+      commande = ReadCommande(&access);
       if(digitalRead(bouton)==LOW or access==true) // bouton poussé, on rentre uniquement à la première detection de l'appui
       {
-      
+        if(digitalRead(bouton) == LOW)
+        {
+          presse = true;
+          }
         if(statu==true)
         {
-          if((etat == true or data=='1')and data!='0')
+          if((etat == true and commande[4]=='1')or (etat==true and presse == true))
           {
             Serial.println("j'allume"); 
             digitalWrite(relay, HIGH);
             digitalWrite(led, LOW);
             etat=false;
           }
-          else if(etat==false or data=='0')
+          else if((etat==false and commande[4]=='0')or (etat==false and presse==true) )
           {
             Serial.println("j'éteins"); 
             digitalWrite(relay, LOW);
@@ -115,3 +109,57 @@ void loop(){
  
  
 }
+
+char * WriteCommande(char * commande)
+{
+  /*****
+  [0] => caractère de début de commande - Non important
+  [1] => caractère de début de commande - Non important
+  [2] => expéditeur - Important
+  [3] => destinataire - Important
+  [4] => commande - Important
+  [5] => caractère de fin de commande - Non important
+  [6] => caractère de fin de commande - Non important
+  *****/
+  Serial.println(commande[4]);     
+}
+
+char * ReadCommande(bool *access)
+{
+  /*****
+  [0] => caractère de début de commande - Non important
+  [1] => caractère de début de commande - Non important
+  [2] => expéditeur - Important
+  [3] => destinataire - Important
+  [4] => commande - Important
+  [5] => caractère de fin de commande - Non important
+  [6] => caractère de fin de commande - Non important
+  *****/
+      char data[7]; //variable contenant le caractère à lire
+      int reception = 0; //variable contenant le nombre de caractère disponibles dans le buffer
+      int i = 0;
+      reception = Serial.available();
+      if(reception !=0)
+      {
+        char save[] = {'0','0'}; // sauvegarde des deux dernier caractères
+        while(reception > 0 && (save[0]!='\\' || save[1]!='1') ) //tant qu'il y a des caractères à lire
+        {            
+            data[i] = Serial.read(); //on lit le caractère
+            save[0] = save[1]; //on déplace les caractères pour faire la bonne sauvegarde
+            save[1] = data[i];
+            Serial.print(i); 
+            Serial.print('-');         
+            Serial.println(data[i]);     
+            reception = Serial.available(); //on relit le nombre de caractères dispo
+            i++;
+        } 
+        if(data[3]==identifiant && i==7)
+        {
+          *access = true;
+          WriteCommande(commande);
+          return data;
+        }
+      }
+}
+
+  
